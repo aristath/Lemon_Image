@@ -1,5 +1,16 @@
 <?php
-
+/**
+ * Image handling class.
+ * Initially implemented for the Shoestrap theme
+ * and then abstracted for general use.
+ *
+ * @package Ari_Image
+ * @since 1.0.0
+ */
+ 
+/**
+ * The main image handling class.
+ */
 if ( ! class_exists( 'Ari_Image' ) ) {
 
 	/**
@@ -198,9 +209,18 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 		}
 
 		/**
-		 * Resizes an image and returns an array containing the resized URL, width, height and file type. Uses native Wordpress functionality.
+		 * Resizes an image and returns an array containing the resized URL, width, height and file type. 
+		 * Uses native Wordpress functionality.
 		 * This is a slightly modified version of http://goo.gl/9iS0CO
 		 *
+		 * @access private
+		 * @since 1.0.0
+		 * @param string   $url    The image URL.
+		 * @param int|null $width  The image width.
+		 * @param int|null $height The image height.
+		 * @param bool     $crop   If we want to crop the image or not.
+		 * @param bool|int $retina If we want to generate a retina image or not.
+		 *                         If an integer is used then it's used as a multiplier (@2x, @3x etc).
 		 * @return array   An array containing the resized image URL, width, height and file type.
 		 */
 		public static function _resize( $url, $width = NULL, $height = NULL, $crop = true, $retina = false ) {
@@ -215,13 +235,16 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 			$height = ( $height ) ? $height : get_option( 'thumbnail_size_h' );
 
 			// Allow for different retina sizes
-			$retina = $retina ? ( $retina === true ? 2 : $retina ) : 1;
+			$retina = ( false === $retina ) ? 1 : $retina;
+			$retina = ( true === $retina ) ? 2 : $retina;
+			$retina = (int) $retina;
 
 			// Get the image file path
 			$file_path = parse_url( $url );
 			$file_path = $_SERVER['DOCUMENT_ROOT'] . $file_path['path'];
 
-			// Destination width and height variables
+			// Destination width and height variables.
+			// Multiplied by the $retina int.
 			$dest_width  = $width * $retina;
 			$dest_height = $height * $retina;
 
@@ -233,8 +256,8 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 
 			// Some additional info about the image
 			$info = pathinfo( $file_path );
-			$dir = $info['dirname'];
-			$ext = '';
+			$dir  = $info['dirname'];
+			$ext  = '';
 
 			if ( ! empty( $info['extension'] ) ) {
 				$ext = $info['extension'];
@@ -246,7 +269,7 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 			$suffix_width  = ( $dest_width / $retina );
 			$suffix_height = ( $dest_height / $retina );
 			$suffix_retina = ( $retina != 1 ) ? '@' . $retina . 'x' : NULL;
-			$suffix = "{$suffix_width}x{$suffix_height}{$suffix_retina}";
+			$suffix        = $suffix_width . 'x' . $suffix_height . $suffix_retina;
 
 			// Get the destination file name
 			$dest_file_name = "{$dir}/{$name}-{$suffix}.{$ext}";
@@ -264,18 +287,18 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 				}
 
 				// Load Wordpress Image Editor
-				require_once ABSPATH . WPINC . '/pluggable.php';
 				$editor = wp_get_image_editor( $file_path );
 				if ( is_wp_error( $editor ) ) {
 					return array( 'url' => $url, 'width' => $width, 'height' => $height );
 				}
 
 				// Get the original image size
-				$size = $editor->get_size();
+				$size        = $editor->get_size();
 				$orig_width  = $size['width'];
 				$orig_height = $size['height'];
 
-				$src_x = $src_y = 0;
+				$src_x = 0;
+				$src_y = 0;
 				$src_w = $orig_width;
 				$src_h = $orig_height;
 
@@ -297,16 +320,18 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 				// Time to crop the image!
 				$editor->crop( $src_x, $src_y, $src_w, $src_h, $dest_width, $dest_height );
 
-				// Now let's save the image
+				// Now let's save the image.
 				$saved = $editor->save( $dest_file_name );
 
-				// Get resized image information
+				// Get resized image information.
 				$resized_url    = str_replace( basename( $url ), basename( $saved['path'] ), $url );
 				$resized_width  = $saved['width'];
 				$resized_height = $saved['height'];
 				$resized_type   = $saved['mime-type'];
 
-				// Add the resized dimensions to original image metadata (so we can delete our resized images when the original image is delete from the Media Library)
+				// Add the resized dimensions to original image metadata
+				// so we can delete our resized images when the original image is deleted 
+				// from the Media Library.
 				$metadata = wp_get_attachment_metadata( $get_attachment[0]->ID );
 				if ( isset( $metadata['image_meta'] ) ) {
 					$metadata['image_meta']['resized_images'][] = $resized_width .'x'. $resized_height;
