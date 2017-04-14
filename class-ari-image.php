@@ -177,7 +177,7 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 				'width'     => '',
 				'height'    => '',
 				'crop'      => true,
-				'retina'    => '',
+				'retina'    => false,
 				'resize'    => true,
 			);
 
@@ -186,6 +186,22 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 			if ( empty( $settings['url'] ) ) {
 				return;
 			}
+
+            if ( false !== $settings['retina'] ) {
+                // Default retina multiplier to 2.
+                if ( true === $settings['retina'] ) {
+                    $settings['retina'] = 2;
+                }
+                // If (int) 1 is used, then assume we want the multiplier to be 1
+                // therefore no retina image should be created.
+                if ( 1 === $settings['retina'] || '1' === $settings['retina'] ) {
+                    $settings['retina'] = false;
+                }
+                // If not a boolean, make sure value is an integer.
+                if ( ! is_bool( $settings['retina'] ) ) {
+                    $settings['retina'] = absint( $settings['retina'] );
+                }
+            }
 
 			// If width or height are not specified, auto-calculate.
 			if ( empty( $settings['width'] ) || empty( $settings['height'] ) ) {
@@ -201,8 +217,8 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 			}
 
 			// Generate the @2x file if retina is enabled
-			if ( current_theme_supports( 'retina' ) && empty( $settings['retina'] ) ) {
-				$results['retina'] = self::_resize( $settings['url'], $settings['width'], $settings['height'], $settings['crop'], true );
+			if ( false !== $settings['retina'] ) {
+				$results['retina'] = self::_resize( $settings['url'], $settings['width'], $settings['height'], $settings['crop'], $settings['retina'] );
 			}
 
 			return self::_resize( $settings['url'], $settings['width'], $settings['height'], $settings['crop'], false );    
