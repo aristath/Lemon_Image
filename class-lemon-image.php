@@ -4,19 +4,19 @@
  * Initially implemented for the Shoestrap theme
  * and then abstracted for general use.
  *
- * @package Ari_Image
+ * @package Lemon_Image
  * @since 1.0.0
  */
  
 /**
  * The main image handling class.
  */
-if ( ! class_exists( 'Ari_Image' ) ) {
+if ( ! class_exists( 'Lemon_Image' ) ) {
 
 	/**
 	* The Image handling class
 	*/
-	class Ari_Image {
+	class Lemon_Image {
 		
 		/**
 		 * The image ID.
@@ -243,7 +243,7 @@ if ( ! class_exists( 'Ari_Image' ) ) {
 			global $wpdb;
 
 			if ( empty( $url ) ) {
-				return new WP_Error( 'no_image_url', __( 'No image URL has been entered.', 'ari' ), $url );
+				return new WP_Error( 'no_image_url', __( 'No image URL has been entered.', 'lemon-image' ), $url );
 			}
 
 			// Get default size from database
